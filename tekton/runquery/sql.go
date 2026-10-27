@@ -33,9 +33,9 @@ BEGIN
     RETURN 0;
   END IF;
   BEGIN
-    raw := btrim(data->'status'->>'startTime');
+    raw := data->'status'->>'startTime';
     IF raw IS NULL OR raw = '' THEN
-      raw := btrim(data->'metadata'->>'creationTimestamp');
+      raw := data->'metadata'->>'creationTimestamp';
     END IF;
     IF raw IS NULL OR raw = '' THEN
       RETURN 0;
@@ -43,6 +43,8 @@ BEGIN
     IF raw !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$' THEN
       RETURN 0;
     END IF;
+    -- timestamptz rounds fractional seconds; Go truncates to the UTC second.
+    raw := regexp_replace(raw, '\.[0-9]+', '');
     RETURN trunc(extract(epoch FROM raw::timestamptz))::bigint;
   EXCEPTION
     WHEN OTHERS THEN
@@ -64,9 +66,9 @@ BEGIN
     RETURN 0;
   END IF;
   BEGIN
-    raw := btrim(data->'status'->>'startTime');
+    raw := data->'status'->>'startTime';
     IF raw IS NULL OR raw = '' THEN
-      raw := btrim(data->'metadata'->>'creationTimestamp');
+      raw := data->'metadata'->>'creationTimestamp';
     END IF;
     IF raw IS NULL OR raw = '' THEN
       RETURN 0;
@@ -74,6 +76,7 @@ BEGIN
     IF raw !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$' THEN
       RETURN 0;
     END IF;
+    raw := regexp_replace(raw, '\.[0-9]+', '');
     PERFORM raw::timestamptz;
     RETURN 1;
   EXCEPTION

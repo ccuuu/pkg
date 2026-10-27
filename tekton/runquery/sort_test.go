@@ -147,3 +147,19 @@ func TestInvalidJSONIsNotASortKey(t *testing.T) {
 		t.Fatal("invalid JSON must not look like a successful key")
 	}
 }
+
+func TestSQLTruncatesFractionAndRejectsPadding(t *testing.T) {
+	if strings.Contains(FunctionsSQL, "btrim(") {
+		t.Fatal("SQL must not accept surrounding whitespace that Go rejects")
+	}
+	if strings.Count(FunctionsSQL, "regexp_replace(raw, '\\.[0-9]+', '')") != 2 {
+		t.Fatal("both SQL functions must drop fractional seconds before casting")
+	}
+	parsed, ok := ParseSortTime("2024-01-02T03:04:05.999999999Z")
+	if !ok || parsed.Unix() != 1704164645 {
+		t.Fatalf("go truncation = %s ok=%v unix=%d", parsed, ok, parsed.Unix())
+	}
+	if _, ok := ParseSortTime(" 2024-01-02T03:04:05Z"); ok {
+		t.Fatal("padded timestamp must be missing")
+	}
+}
